@@ -1,0 +1,73 @@
+version: "3.7"
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    hostname: mongodb
+    ports:
+      - "27017:27017"
+    env_file:
+      - mongodb.env
+    volumes:
+      - data:/data/db
+      - mongo-config:/data/configdb
+      - ./mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+  
+  redis-server:
+    image: "redis:alpine"
+    ports:
+      - "6379:6379"
+    command: ['--requirepass "secret"']
+
+  web-server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile.dev
+    container_name: heni-web-server
+    env_file:
+      - server.env
+      - mongodb.env
+      - redis.env
+      - session.env
+      - cloudinary.env
+    volumes:
+      - ./server/src:/app/server/src
+      - ./server/tsconfig.json:/app/server/tsconfig.json
+      - ./server/nodemon.json:/app/server/nodemon.json
+    ports:
+      - "5000:5000"
+    depends_on:  
+      - mongodb
+    links:
+      - 'mongodb'   
+    command: npm start
+    tty: true
+    stdin_open: true
+
+
+  web-client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev 
+    volumes: 
+      - ./client:/app/client
+      - /app/client/node_modules
+    ports:
+      - '3000:3000'
+    depends_on:  
+      - web-server
+    links:
+      - 'web-server'  
+    restart: unless-stopped
+    container_name: web-client
+    command: npm start
+    tty: true
+    stdin_open: true    
+
+
+    
+volumes: 
+  data:
+  mongo-config:
+  

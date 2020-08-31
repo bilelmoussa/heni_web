@@ -1,0 +1,7 @@
+export const {
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY,
+    UPLOAD_PRESET,
+    CLOUDINARY_API_SECRET,
+} = process.env;
+
